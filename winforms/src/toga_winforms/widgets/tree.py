@@ -53,13 +53,17 @@ class Tree(Widget):
     def _item_text(self, item):
         if not self.interface.accessors:
             return ""
-        accessor = self.interface.accessors[0]
-        val = getattr(item, accessor, None)
-        if isinstance(val, tuple):
-            val = val[1]
-        if val is None:
-            val = self.interface.missing_value
-        return str(val)
+
+        text_parts = []
+        for accessor in self.interface.accessors:
+            val = getattr(item, accessor, None)
+            if isinstance(val, tuple):
+                val = val[1]
+            if val is None:
+                val = self.interface.missing_value
+            text_parts.append(str(val))
+
+        return " ".join(text_parts)
 
     def _item_icon(self, item):
         if not self.interface.accessors:
