@@ -30,13 +30,12 @@ class Tree(Widget):
             parent._impl.Nodes.Insert(index, node)
 
     def _create_node_recurse(self, item):
-        col0 = self.interface._columns[0]
-        text = col0.text(item, self.interface.missing_value)
+        text = self._item_text(item)
         node = WinForms.TreeNode(text)
         node.Tag = item
         item._impl = node
 
-        icon = col0.icon(item)
+        icon = self._item_icon(item)
         if icon is not None:
             image_index = self._image_index(icon)
             node.ImageIndex = image_index
@@ -51,6 +50,33 @@ class Tree(Widget):
 
         return node
 
+    def _item_text(self, item):
+        if not self.interface.accessors:
+            return ""
+        accessor = self.interface.accessors[0]
+        val = getattr(item, accessor, None)
+        if isinstance(val, tuple):
+            val = val[1]
+        if val is None:
+            val = self.interface.missing_value
+        return str(val)
+
+    def _item_icon(self, item):
+        if not self.interface.accessors:
+            return None
+        accessor = self.interface.accessors[0]
+        val = getattr(item, accessor, None)
+        icon = None
+        if isinstance(val, tuple):
+            if val[0] is not None:
+                icon = val[0]
+        else:
+            try:
+                icon = val.icon
+            except AttributeError:
+                pass
+        return None if icon is None else icon._impl
+
     def _image_index(self, icon):
         images = self.native.ImageList.Images
         key = str(icon.path)
@@ -62,10 +88,9 @@ class Tree(Widget):
 
     def change(self, item):
         node = item._impl
-        col0 = self.interface._columns[0]
-        node.Text = col0.text(item, self.interface.missing_value)
+        node.Text = self._item_text(item)
 
-        icon = col0.icon(item)
+        icon = self._item_icon(item)
         if icon is not None:
             image_index = self._image_index(icon)
             node.ImageIndex = image_index
